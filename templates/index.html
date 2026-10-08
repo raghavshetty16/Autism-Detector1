@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Autism AQ-10 Screening</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="screen">
+
+        <div class="hero">
+          <div class="hero-illustration" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.12)"/>
+              <!-- head/profile -->
+              <path d="M38 70 C30 70 24 62 24 52 C24 38 33 26 48 26 C61 26 70 36 70 48 C70 53 68 57 65 60 L65 70 L57 70 L57 64 C54 65 50 65 47 64 L47 70 Z"
+                    fill="#ffffff" opacity="0.95"/>
+              <!-- puzzle piece notch (autism symbol motif) cut from the head -->
+              <circle cx="48" cy="40" r="6.5" fill="rgba(23,107,99,1)"/>
+              <!-- connection nodes -->
+              <circle cx="74" cy="30" r="4" fill="#ffffff"/>
+              <circle cx="82" cy="44" r="3" fill="#ffffff" opacity="0.85"/>
+              <circle cx="70" cy="20" r="3" fill="#ffffff" opacity="0.7"/>
+              <path d="M65 32 L73 30" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+              <path d="M76 33 L81 42" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M72 27 L70 22" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+            </svg>
+          </div>
+          <div class="hero-text">
+            <p class="eyebrow">AQ-10 adult screening</p>
+            <h1>Autism Detection</h1>
+          </div>
+          <div class="hero-deco" aria-hidden="true">
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="20" r="18" fill="#ffffff"/>
+              <circle cx="70" cy="60" r="26" fill="#ffffff"/>
+              <circle cx="85" cy="15" r="9" fill="#ffffff"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="work-panel">
+
+          {% if result %}
+            {% set is_yes = result.prediction == 'YES' %}
+            <div class="modal-backdrop" id="resultModal" role="presentation">
+              <section class="result-modal" role="dialog" aria-modal="true" aria-labelledby="resultModalTitle">
+                <div class="modal-top">
+                  <div>
+                    <p class="eyebrow">Screening result</p>
+                    <h2 id="resultModalTitle">{{ 'ASD traits indicated' if is_yes else 'ASD traits not indicated' }}</h2>
+                  </div>
+                  <button type="button" class="modal-close" data-close-modal aria-label="Close result">Close</button>
+                </div>
+                <div class="modal-body">
+            <section class="outcome-card {{ 'outcome-yes' if is_yes else 'outcome-no' }}" aria-live="polite">
+              <div class="outcome-head">
+                <div class="outcome-icon" aria-hidden="true">
+                  {% if is_yes %}
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 9v4M12 16.5h.01M10.3 3.9 2.5 17.2c-.6 1 .2 2.3 1.4 2.3h16.2c1.2 0 2-1.3 1.4-2.3L13.7 3.9c-.6-1-2.1-1-2.7 0Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  {% else %}
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="m4 12.5 5 5L20 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  {% endif %}
+                </div>
+                <div class="outcome-copy">
+                  <p class="outcome-eyebrow">Result: {{ result.prediction }}</p>
+                  <p class="outcome-title">
+                    {{ 'ASD traits indicated' if is_yes else 'ASD traits not indicated' }}
+                  </p>
+                  <p class="outcome-sub">
+                    {{ 'Some of your answers match common autism-related traits. You may wish to discuss this result with a qualified professional.' if is_yes else 'Your answers show fewer autism-related traits in this screening.' }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="outcome-stats">
+                <div class="stat-chip">
+                  <div class="stat-chip-row">
+                    <span>{{ result.score }}<small style="font-size:0.95rem;font-weight:600;">/10</small></span>
+                  </div>
+                  <small>AQ-10 score</small>
+                  <div class="stat-meter">
+                    <div class="stat-meter-fill" style="width: {{ (result.score / 10 * 100) | round | int }}%;"></div>
+                  </div>
+                </div>
+                {% if result.probability is not none %}
+                  <div class="stat-chip">
+                    <div class="stat-chip-row">
+                      <span>{{ result.probability }}%</span>
+                    </div>
+                    <small>Confidence</small>
+                    <div class="stat-meter">
+                      <div class="stat-meter-fill" style="width: {{ result.probability }}%;"></div>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </section>
+            <p class="save-status">
+              {{ 'Your answers were saved for future model training.' if saved_to_mongodb else 'Your result is ready, but your answers could not be saved.' }}
+            </p>
+
+            <section class="explanation-card">
+              <div class="explanation-head">
+                <p class="eyebrow">How was this decided?</p>
+                <h2>What influenced this result</h2>
+                <p>
+                  {{ result.explanation.summary }}
+                  This is only a screening result, not a medical diagnosis.
+                </p>
+              </div>
+
+              <div class="detail-grid">
+                {% for item in result.explanation.profile %}
+                  <div class="detail-chip">
+                    <small>{{ item.label }}</small>
+                    <span>{{ item.value }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {% if result.explanation.main_factors %}
+                <div class="factor-section">
+                  <h3>Details that supported this result</h3>
+                  <div class="factor-list">
+                    {% for factor in result.explanation.main_factors %}
+                      <div class="factor-row">
+                        <span>{{ factor.feature }}</span>
+                        <strong>{{ 'Points toward YES' if factor.direction == 'YES' else 'Points toward NO' }}</strong>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if result.explanation.opposing_factors %}
+                <div class="factor-section muted-section">
+                  <h3>Details that pointed the other way</h3>
+                  <div class="factor-list">
+                    {% for factor in result.explanation.opposing_factors %}
+                      <div class="factor-row">
+                        <span>{{ factor.feature }}</span>
+                        <strong>{{ 'Points toward YES' if factor.direction == 'YES' else 'Points toward NO' }}</strong>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <div class="aq-breakdown">
+                <h3>How your 10 answers were scored</h3>
+                {% for item in result.explanation.aq_items %}
+                  <div class="aq-row {{ 'aq-scored' if item.scored else 'aq-not-scored' }}">
+                    <div class="aq-number">{{ item.number }}</div>
+                    <div>
+                      <p>{{ item.question }}</p>
+                      <small>You answered {{ item.answer }}. {{ item.rule }}</small>
+                    </div>
+                    <strong>{{ item.status }}</strong>
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+                  <div class="modal-actions">
+                    <button type="button" class="secondary-button" data-close-modal>Change answers</button>
+                    <a class="primary-link-button" href="/">Start again</a>
+                  </div>
+                </div>
+              </section>
+            </div>
+          {% endif %}
+
+          {% if error %}
+            <section class="error-band" aria-live="polite">
+              {{ error }}
+            </section>
+          {% endif %}
+
+          <form class="question-form" action="/predict" method="post">
+            <section class="profile-section" aria-label="Screening details">
+              <div class="field-group">
+                <label for="age">Age</label>
+                <input
+                  id="age"
+                  name="age"
+                  type="number"
+                  min="1"
+                  max="120"
+                  step="1"
+                  value="{{ form_values.get('age', '') }}"
+                  required
+                >
+              </div>
+
+              <div class="field-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                  <option value="" disabled {% if not form_values.get('gender') %}selected{% endif %}>Select</option>
+                  {% for option in category_options.gender %}
+                    <option value="{{ option }}" {% if form_values.get('gender') == option %}selected{% endif %}>
+                      {{ 'Female' if option == 'f' else 'Male' if option == 'm' else option }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label for="ethnicity">Ethnicity</label>
+                <select id="ethnicity" name="ethnicity" required>
+                  <option value="" disabled {% if not form_values.get('ethnicity') %}selected{% endif %}>Select</option>
+                  {% for option in category_options.ethnicity %}
+                    <option value="{{ option }}" {% if form_values.get('ethnicity') == option %}selected{% endif %}>
+                      {{ 'Unknown' if option == '?' else option }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label for="contry_of_res">Country of residence</label>
+                <select id="contry_of_res" name="contry_of_res" required>
+                  <option value="" disabled {% if not form_values.get('contry_of_res') %}selected{% endif %}>Select</option>
+                  {% for option in category_options.contry_of_res %}
+                    <option value="{{ option }}" {% if form_values.get('contry_of_res') == option %}selected{% endif %}>
+                      {{ option }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label for="relation">Completed by</label>
+                <select id="relation" name="relation" required>
+                  <option value="" disabled {% if not form_values.get('relation') %}selected{% endif %}>Select</option>
+                  {% for option in category_options.relation %}
+                    <option value="{{ option }}" {% if form_values.get('relation') == option %}selected{% endif %}>
+                      {{ 'Unknown' if option == '?' else option }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <fieldset class="inline-choice">
+                <legend>Had jaundice?</legend>
+                <div class="toggle-group">
+                  {% for option in category_options.jundice %}
+                    <label>
+                      <input
+                        type="radio"
+                        name="jundice"
+                        value="{{ option }}"
+                        required
+                        {% if form_values.get('jundice') == option %}checked{% endif %}
+                      >
+                      <span>{{ option|capitalize }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+
+              <fieldset class="inline-choice">
+                <legend>Family autism history?</legend>
+                <div class="toggle-group">
+                  {% for option in category_options.austim %}
+                    <label>
+                      <input
+                        type="radio"
+                        name="austim"
+                        value="{{ option }}"
+                        required
+                        {% if form_values.get('austim') == option %}checked{% endif %}
+                      >
+                      <span>{{ option|capitalize }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </fieldset>
+            </section>
+
+            <div class="question-grid">
+              {% for question in questions %}
+                {% set current = form_values.get(question.name) %}
+                <fieldset class="question-card">
+                  <legend>{{ question.number }}</legend>
+                  <p>{{ question.text }}</p>
+                  <div class="toggle-group">
+                    <label>
+                      <input
+                        type="radio"
+                        name="{{ question.name }}"
+                        value="yes"
+                        required
+                        {% if current == 'yes' %}checked{% endif %}
+                      >
+                      <span>Yes</span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="{{ question.name }}"
+                        value="no"
+                        required
+                        {% if current == 'no' %}checked{% endif %}
+                      >
+                      <span>No</span>
+                    </label>
+                  </div>
+                </fieldset>
+              {% endfor %}
+            </div>
+
+            <div class="actions">
+              <button type="reset" class="secondary-button">Reset</button>
+              <button type="submit" class="primary-button">Predict</button>
+            </div>
+          </form>
+
+          <p class="note">
+            This is a screening prediction from the project dataset, not a medical diagnosis.
+          </p>
+        </div>
+      </section>
+    </main>
+    {% if result %}
+      <script>
+        const resultModal = document.getElementById("resultModal");
+        document.querySelectorAll("[data-close-modal]").forEach((button) => {
+          button.addEventListener("click", () => {
+            resultModal.hidden = true;
+          });
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            resultModal.hidden = true;
+          }
+        });
+        resultModal.addEventListener("click", (event) => {
+          if (event.target === resultModal) {
+            resultModal.hidden = true;
+          }
+        });
+      </script>
+    {% endif %}
+  </body>
+</html>
